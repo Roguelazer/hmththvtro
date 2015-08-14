@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -ex
+set -e
 
 CONGRESSROOT="govtrack.us::govtrackdata/congress/"
 FIRST_CONGRESS=111
