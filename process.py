@@ -21,10 +21,16 @@ import dateutil.parser
 import jinja2
 
 
-REPEAL_REGEX = re.compile(r'repeal.*(patient protection|affordable care act|obamacare)', re.I)
+REPEAL_REGEXES = (
+    re.compile(r'(repeal|deauthorize|defund).*(patient protection|affordable care act|obamacare)', re.I),
+    re.compile(r'prohibit .* from enforcing the Patient Protection and Affordable Care Act', re.I),
+    re.compile(r'no.*Internal Revenue Service.*carry out.* Patient Protection and Affordable Care Act', re.I),
+    re.compile(r'To prevent implementation and enforcement of Obamacare.', re.I)
+)
 
 PPACA_BILL_ID = 'hr3590-111'
 
+# most of these are attempts to repeal some Medicare portion of the ACA
 NOT_REPEAL_BILL_IDS = frozenset([
     'hr1270-114',
     'hr1580-112',
@@ -42,13 +48,30 @@ NOT_REPEAL_BILL_IDS = frozenset([
     'hr2835-113',
     'hr588-114',
     'hr2488-114',
+    'hr1213-112',
+    'hr3633-112',
+    'hr5433-111',  # this one seems extra scummy
+])
+
+DEFINITELY_REPEAL_BILL_IDS = frozenset([
+    'hr683-114',
+    'hr5570-111',
+    'hr2087-113',
 ])
 
 
 def is_repeal(hr_summary_dict):
     if hr_summary_dict['bill_id'] in NOT_REPEAL_BILL_IDS:
         return False
-    if REPEAL_REGEX.search(hr_summary_dict['official_title']):
+    if hr_summary_dict['bill_id'] in DEFINITELY_REPEAL_BILL_IDS:
+        return True
+    if any(r.search(hr_summary_dict['official_title']) for r in REPEAL_REGEXES):
+        return True
+    titles = [hr_summary_dict.get(f) for f in ('official_title', 'short_title')]
+    titles = map(lambda x: x.lower() if x else '', titles)
+    if any('nobamacare' in title for title in titles):
+        return True
+    if any('defund obamacare' in title for title in titles):
         return True
     return False
 
@@ -58,12 +81,15 @@ def get_vote_dict(roll_number, vote_source_directory):
     with open(path, 'r') as f:
         vote = json.load(f)
     by_party = collections.defaultdict(collections.Counter)
+    by_result = collections.Counter()
     for vote_type, votes in vote['votes'].iteritems():
         for vote_item in votes:
             by_party[vote_type][vote_item['party']] += 1
+            by_result[vote_type] += 1
     return {
         'result': vote['result'],
-        'by_party': dict((k, dict(v)) for (k, v) in by_party.items())
+        'by_party': dict((k, dict(v)) for (k, v) in by_party.items()),
+        'by_result': dict(by_result),
     }
 
 
@@ -90,6 +116,7 @@ def parse_hrs(congress_num, source_directory, vote_source_directory):
 
 def main():
     parser = argparse.ArgumentParser()
+    parser.add_argument('-w', '--write-summary', action='store_true', help='Write summary of repeals (for debugging)')
     parser.add_argument('data_directory', help='Directory containing all house resolutions and votes')
     args = parser.parse_args()
 
@@ -136,9 +163,10 @@ def main():
             vote_directory = os.path.join(data_directory, 'votes', congress)
             repeals = itertools.chain(repeals, parse_hrs(congress_num, hr_directory, vote_directory))
 
-        with open(summary_file, 'w') as f:
-            repeals = list(repeals)
-            f.write(json.dumps(list(repeals)))
+        if args.write_summary:
+            with open(summary_file, 'w') as f:
+                repeals = list(repeals)
+                f.write(json.dumps(list(repeals)))
 
     for repeal in sorted(repeals, key=lambda h: h['resolution']['introduced_at']):
         if not is_repeal(repeal['resolution']):

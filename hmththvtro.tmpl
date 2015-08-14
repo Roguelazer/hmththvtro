@@ -49,12 +49,30 @@ a[href] {
     color: blue;
 }
 
+.democrat_bar {
+    fill:rgb(0, 0, 255);
+    stroke-width:1;
+    stroke: rgb(0, 0, 0);
+}
+
 .republican {
     color: red;
 }
 
+.republican_bar {
+    fill:rgb(255, 0, 0);
+    stroke-width:1;
+    stroke: rgb(0, 0, 0);
+}
+
 .independent {
     color: #DEC509;
+}
+
+.independent_bar {
+    fill:#DEC509;
+    stroke-width:1;
+    stroke: rgb(0, 0, 0);
 }
 
 .nowrap {
@@ -80,7 +98,7 @@ ul.affiliation-list,
 ul.resolution-list {
     list-style: none;
     margin: 0;
-    padding: 0.5em;
+    padding: 0;
 }
 
 ul.affiliation-list li,
@@ -88,7 +106,17 @@ ul.resolution-list li {
     margin: 0;
     padding: 0;
     display: inline;
+    border-left: 1px solid #ddd;
+    padding-left: 0.5em;
+    padding-right: 0.25em;
 }
+
+ul.affiliation-list li:first-child,
+ul.resolution-list li:first-child {
+    border-left: 0;
+    padding-left: 0;
+}
+
         </style>
     </head>
     <body>
@@ -100,13 +128,13 @@ ul.resolution-list li {
             </div>
             <div class="row">
                 <div class="col-md-10 col-md-offset-1">
-                    <p>As of {{last_update.strftime("%B %d, %Y")}}, the United States House of Representatives has considered <strong>{{count}}</strong> times to repeal the Patient Protection and
-                    Affordable Care Act (better known as Obamacare<a class="ref" href="#ref1">[1]</a>).</p>
+                    <p>As of {{last_update.strftime("%B %d, %Y")}}, the United States House of Representatives has considered <strong>{{count}}</strong> resolutions to repeal, deauthorize, defund, or
+                    otherwise destroy the Patient Protection and Affordable Care Act (better known as Obamacare<a class="ref" href="#ref1">[1]</a>).</p>
                     <p>The GOP-led House has also shut down the U.S. federal government for the first time in 17 years, and failed to meet <del>m</del>any of their basic obligations. But, hey, at
                     least they can vote dozens of times to repeal a perfectly constitutional law<a class="ref" href="#ref2">[2]</a> which, while strictly worse than a conventional single-payer system,
                     will immensely help their non-insurance-company owning constituents.</p>
-                    <p>Estimating half a day for each passage, this translates to <strong>{{ "${:,.2f}".format(cost) }}</strong> in salary for the esteemed Representatives to waste their, their
-                    consituents', and their country's time.<a class="ref" href="#ref3">[3]</a></p>
+                    <p>Every one of these resolutions is a waste of thousands of your tax dollars, and if you see your represenative's name on this list, I urge you to contact them and speak out
+                    against this partisan, persitent misuse of time and resources.</p>
                 </div>
             </div>
             <div class="row">
@@ -135,10 +163,14 @@ ul.resolution-list li {
                                 {% for result, parties in repeal.vote.by_party.items() %}
                                 <tr>
                                     <td>{{result}}</td>
+                                    <td>{{repeal.vote.by_result[result]}}</td>
+                                    <td><svg width="435" height="15">
+                                    {% set last_x = "0" %}
                                     {% for party in ALL_PARTIES %}
-                                    {% set party_full = PARTY_MAP[party] %}
-                                    <td class="{{party_full}}">{{parties.get(party, 0)}}</td>
+                                    {% set full_party=PARTY_MAP[party] %}
+                                    <rect x="{{last_x}}" height="15" width="{{parties.get(party, 0)}}" class="{{full_party}}_bar"></rect>
                                     {% endfor %}
+                                    </svg></td>
                                 </tr>
                                 {% endfor %}
                             </table>
@@ -156,7 +188,7 @@ ul.resolution-list li {
                 <table class="table table-responsive table-hover data-table">
                     <thead>
                         <tr>
-                            <th>Bills Sponsored/Co-sponsored</th>
+                            <th class="nowrap">Bills (Co-)Sponsored</th>
                             <th>Name</th>
                             <th></th>
                             <th></th>
@@ -171,11 +203,7 @@ ul.resolution-list li {
                         {% endif %}
                         <tr>
                             <td>{{resolutions | count}}</td>
-                            {% if legislator.id.bioguide %}
-                            <td><a href="http://bioguide.congress.gov/scripts/biodisplay.pl?index={{legislator.id.bioguide}}">{{lname}}</a></td>
-                            {% else %}
-                            <td>{{lname}}
-                            {% endif %}
+                            <td class="nowrap"><a id="spon-{{sponsor_id}}" href="http://bioguide.congress.gov/scripts/biodisplay.pl?index={{legislator.id.bioguide}}">{{lname}}</a></td>
                             <td><ul class="nowrap affiliation-list">
                                 {% for affiliation in legislator_affiliations[sponsor_id] %}
                                 {% set astyle=PARTY_MAP[affiliation[0]] %}
@@ -197,7 +225,6 @@ ul.resolution-list li {
                     <ol>
                         <li><a id="ref1" href="http://www.cnn.com/2012/06/25/politics/obamacare-word-debate/index.html">http://www.cnn.com/2012/06/25/politics/obamacare-word-debate/index.html</a></li>
                         <li><a id="ref2" href="http://www.supremecourt.gov/opinions/11pdf/11-393c3a2.pdf"><em>National Federation of Independent Business v.  Sebelius</em></a></li>
-                        <li><a id="ref3"></a><a href="http://thomas.loc.gov/home/ds/">225 working days per year</a>, <a href="http://usgovinfo.about.com/od/uscongress/a/congresspay.htm">$174,000 salary per representative per year</a>, 435 representatives. Insert multiplication and division operators as needed.</li>
                     </ol>
                 </div>
             </div>
@@ -206,7 +233,8 @@ ul.resolution-list li {
                     href="https://www.roguelazer.com">roguelazer.com</a>).
                 All errors are my own.
                 </p>
-                <p>Data source from <a href="https://www.govtrack.us">GovTrack.us</a></p>
+                <p>This project is Open Source! Check out the code at <a href="https://github.com/Roguelazer/hmththvtro">https://github.com/Roguelazer/hmththvtro</a>.</p>
+                <p>Data sourced from <a href="https://www.govtrack.us">GovTrack.us</a></p>
             </div>
         </div>
         <script>
