@@ -1,0 +1,221 @@
+<!doctype html>
+<html>
+    <head>
+        <link rel="shortcut icon" type="image/png" href="favicon.png" />
+        <title>How Many Times Has The House Voted to Repeal Obamacare?</title>
+        <meta charset="UTF-8">
+        <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" />
+        <style type="text/css">
+.howmany {
+    padding: 5% 0 5% 0;
+    text-align: center;
+}
+
+.howmany h1 {
+    font-size: 1000%;
+}
+
+.footnotes {
+    margin-top: 20em;
+}
+
+.ref {
+    font-size: 66%;
+    vertical-align: text-top;
+}
+
+.footnotes {
+    font-size: 80%;
+}
+
+a {
+    color: black;
+}
+
+a:hover {
+    text-decoration: none;
+}
+
+a[href] {
+    color: #428BCA;
+}
+
+#footer p {
+    font-size: 60%;
+    margin: 1em 0 0 0;
+}
+
+.democrat {
+    color: blue;
+}
+
+.republican {
+    color: red;
+}
+
+.independent {
+    color: #DEC509;
+}
+
+.nowrap {
+    white-space:nowrap;
+}
+
+.data-table {
+    font-size: 80%;
+}
+
+.vote-table tbody tr td {
+    padding: 4px;
+    border-top: 1px solid #eee;
+    border-bottom: 1px solid #eee;
+}
+
+h2 {
+    width: 100%;
+    text-align: center;
+}
+
+ul.affiliation-list,
+ul.resolution-list {
+    list-style: none;
+    margin: 0;
+    padding: 0.5em;
+}
+
+ul.affiliation-list li,
+ul.resolution-list li {
+    margin: 0;
+    padding: 0;
+    display: inline;
+}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="row">
+                <div class="howmany col-md-6 col-md-offset-3">
+                    <h1>{{count}}</h1>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-10 col-md-offset-1">
+                    <p>As of {{last_update.strftime("%B %d, %Y")}}, the United States House of Representatives has considered <strong>{{count}}</strong> times to repeal the Patient Protection and
+                    Affordable Care Act (better known as Obamacare<a class="ref" href="#ref1">[1]</a>).</p>
+                    <p>The GOP-led House has also shut down the U.S. federal government for the first time in 17 years, and failed to meet <del>m</del>any of their basic obligations. But, hey, at
+                    least they can vote dozens of times to repeal a perfectly constitutional law<a class="ref" href="#ref2">[2]</a> which, while strictly worse than a conventional single-payer system,
+                    will immensely help their non-insurance-company owning constituents.</p>
+                    <p>Estimating half a day for each passage, this translates to <strong>{{ "${:,.2f}".format(cost) }}</strong> in salary for the esteemed Representatives to waste their, their
+                    consituents', and their country's time.<a class="ref" href="#ref3">[3]</a></p>
+                </div>
+            </div>
+            <div class="row">
+                <h2>The Resolutions</h2>
+                <table class="table table-responsive table-hover data-table">
+                    <thead>
+                        <tr>
+                            <th>Introduced</th>
+                            <th>Bill ID</th>
+                            <th>Title</th>
+                            <th>Votes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for repeal in repeals %}
+                        <tr>
+                            <td class="nowrap">{{repeal.date.strftime('%Y-%m-%d')}}</td>
+                            <td><a id="res-{{repeal.bill_id}}" href="https://www.congress.gov/bill/{{repeal.congress}}th-congress/house-bill/{{repeal.resolution.number}}">{{repeal.bill_id}}</a></td>
+                            {% if repeal.resolution.short_title %}
+                            <td><abbr title="{{repeal.resolution.official_title}}">{{repeal.resolution.short_title}}</abbr></td>
+                            {% else %}
+                            <td>{{repeal.resolution.official_title}}</td>
+                            {% endif %}
+                            {% if repeal.vote %}
+                            <td><table class="vote-table">
+                                {% for result, parties in repeal.vote.by_party.items() %}
+                                <tr>
+                                    <td>{{result}}</td>
+                                    {% for party in ALL_PARTIES %}
+                                    {% set party_full = PARTY_MAP[party] %}
+                                    <td class="{{party_full}}">{{parties.get(party, 0)}}</td>
+                                    {% endfor %}
+                                </tr>
+                                {% endfor %}
+                            </table>
+                            </td>
+                            {% else %}
+                            <td></td>
+                            {% endif %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="row">
+                <h2>The Sponsors</h2>
+                <table class="table table-responsive table-hover data-table">
+                    <thead>
+                        <tr>
+                            <th>Bills Sponsored/Co-sponsored</th>
+                            <th>Name</th>
+                            <th></th>
+                            <th></th>
+                    </thead>
+                    <tbody>
+                        {% for sponsor_id, resolutions in sponsors %}
+                        {% set legislator = legislators_by_thomas_id[sponsor_id] %}
+                        {% if legislator.name.official_full %}
+                            {% set lname = legislator.name.official_full %}
+                        {% else %}
+                            {% set lname = legislator.name.first + " " + legislator.name.last %}
+                        {% endif %}
+                        <tr>
+                            <td>{{resolutions | count}}</td>
+                            {% if legislator.id.bioguide %}
+                            <td><a href="http://bioguide.congress.gov/scripts/biodisplay.pl?index={{legislator.id.bioguide}}">{{lname}}</a></td>
+                            {% else %}
+                            <td>{{lname}}
+                            {% endif %}
+                            <td><ul class="nowrap affiliation-list">
+                                {% for affiliation in legislator_affiliations[sponsor_id] %}
+                                {% set astyle=PARTY_MAP[affiliation[0]] %}
+                                <li class="{{astyle}}">{{affiliation}}</li>
+                                {% endfor %}
+                            </ul></td>
+                            <td><ul class="resolution-list">
+                                {% for resolution in resolutions %}
+                                <li><a href="#res-{{resolution}}">{{resolution}}</a></li>
+                                {% endfor %}
+                            </ul></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="row footnotes">
+                <div class="col-md-10 col-md-offset-1">
+                    <ol>
+                        <li><a id="ref1" href="http://www.cnn.com/2012/06/25/politics/obamacare-word-debate/index.html">http://www.cnn.com/2012/06/25/politics/obamacare-word-debate/index.html</a></li>
+                        <li><a id="ref2" href="http://www.supremecourt.gov/opinions/11pdf/11-393c3a2.pdf"><em>National Federation of Independent Business v.  Sebelius</em></a></li>
+                        <li><a id="ref3"></a><a href="http://thomas.loc.gov/home/ds/">225 working days per year</a>, <a href="http://usgovinfo.about.com/od/uscongress/a/congresspay.htm">$174,000 salary per representative per year</a>, 435 representatives. Insert multiplication and division operators as needed.</li>
+                    </ol>
+                </div>
+            </div>
+            <div id="footer" class="credit">
+                <p>Created and updated by James Brown (<a
+                    href="https://www.roguelazer.com">roguelazer.com</a>).
+                All errors are my own.
+                </p>
+                <p>Data source from <a href="https://www.govtrack.us">GovTrack.us</a></p>
+            </div>
+        </div>
+        <script>
+            (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+            })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+            ga('create', 'UA-3429056-4', 'howmanytimeshasthehousevotedtorepealobamacare.com');
+            ga('send', 'pageview');
+        </script>
+    </body>
+</html>
