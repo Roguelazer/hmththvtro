@@ -1,0 +1,4 @@
+python-dateutil>=2
+PyYAML>=3.0
+jinja2>=2.6,<3.0
+ujson
