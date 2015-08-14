@@ -125,9 +125,9 @@ def main():
 
     legislators_by_thomas_id = {}
     legislator_affiliations = collections.defaultdict(set)
-    for legislator in (
-        json.load(open(os.path.join(args.data_directory, 'legislators-current.json'))) +
-        json.load(open(os.path.join(args.data_directory, 'legislators-historical.json')))
+    for legislator in itertools.chain(
+        json.load(open(os.path.join(data_directory, 'legislators-current.json'))),
+        json.load(open(os.path.join(data_directory, 'legislators-historical.json')))
     ):
         if 'thomas' in legislator['id']:
             thomas_id = legislator['id']['thomas']
