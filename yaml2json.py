@@ -9,7 +9,7 @@ def main():
     parser.add_argument('json_file', type=argparse.FileType('w'))
     args = parser.parse_args()
 
-    args.json_file.write(json.dumps(yaml.safe_load(args.yaml_file)))
+    args.json_file.write(json.dumps(yaml.load(args.yaml_file, Loader=yaml.CSafeLoader)))
 
 
 main()
