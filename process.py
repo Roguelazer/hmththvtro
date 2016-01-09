@@ -25,7 +25,8 @@ REPEAL_REGEXES = (
     re.compile(r'(repeal|deauthorize|defund).*(patient protection|affordable care act|obamacare)', re.I),
     re.compile(r'prohibit .* from enforcing the Patient Protection and Affordable Care Act', re.I),
     re.compile(r'no.*Internal Revenue Service.*carry out.* Patient Protection and Affordable Care Act', re.I),
-    re.compile(r'To prevent implementation and enforcement of Obamacare.', re.I)
+    re.compile(r'To prevent implementation and enforcement of Obamacare.', re.I),
+    re.compile(r'restoring americans. healthcare freedom', re.I)
 )
 
 PPACA_BILL_ID = 'hr3590-111'
@@ -66,10 +67,10 @@ def is_repeal(hr_summary_dict):
         return False
     if hr_summary_dict['bill_id'] in DEFINITELY_REPEAL_BILL_IDS:
         return True
-    if any(r.search(hr_summary_dict['official_title']) for r in REPEAL_REGEXES):
-        return True
     titles = [hr_summary_dict.get(f) for f in ('official_title', 'short_title')]
     titles = map(lambda x: x.lower() if x else '', titles)
+    if any(any(r.search(title) for r in REPEAL_REGEXES) for title in titles):
+        return True
     if any('nobamacare' in title for title in titles):
         return True
     if any('defund obamacare' in title for title in titles):
