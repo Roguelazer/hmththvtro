@@ -26,7 +26,8 @@ REPEAL_REGEXES = (
     re.compile(r'prohibit .* from enforcing the Patient Protection and Affordable Care Act', re.I),
     re.compile(r'no.*Internal Revenue Service.*carry out.* Patient Protection and Affordable Care Act', re.I),
     re.compile(r'To prevent implementation and enforcement of Obamacare.', re.I),
-    re.compile(r'restoring americans. healthcare freedom', re.I)
+    re.compile(r'restoring americans. healthcare freedom', re.I),
+    re.compile(r'repeal the requirements added by the Patient Protection and Affordable Care Act', re.I)
 )
 
 PPACA_BILL_ID = 'hr3590-111'
