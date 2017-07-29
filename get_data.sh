@@ -27,6 +27,15 @@ fi
 mkdir -p "$datadir/hr"
 mkdir -p "$datadir/votes"
 
+if type md5sum >/dev/null 2>&1 ; then
+    md5sum=md5sum
+elif type md5  >/dev/null 2>&1 ; then
+    md5sum=md5
+else
+    echo >&2 "no md5sum/md5 found"
+    exit 1
+fi
+
 get_yaml() {
     src="$1"
     target="$2"
@@ -37,7 +46,7 @@ get_yaml() {
         old_md5=""
     fi
     rsync $RSYNC_ARGS "$src" "$target"
-    new_md5="$(md5sum "$target")"
+    new_md5="$($md5sum "$target")"
     if [ ! -e "${json_target}" ] || [ "$old_md5" != "$new_md5" ]; then
         env/bin/python yaml2json.py "$target" "$json_target"
     fi

@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+
 try:
     import ujson as json
 except ImportError:
@@ -16,6 +18,7 @@ import itertools
 import os
 import operator
 import re
+import sys
 
 import dateutil.parser
 import jinja2
@@ -27,7 +30,8 @@ REPEAL_REGEXES = (
     re.compile(r'no.*Internal Revenue Service.*carry out.* Patient Protection and Affordable Care Act', re.I),
     re.compile(r'To prevent implementation and enforcement of Obamacare.', re.I),
     re.compile(r'restoring americans. healthcare freedom', re.I),
-    re.compile(r'repeal the requirements added by the Patient Protection and Affordable Care Act', re.I)
+    re.compile(r'repeal the requirements added by the Patient Protection and Affordable Care Act', re.I),
+    re.compile(r'American Health Care Act', re.I),
 )
 
 PPACA_BILL_ID = 'hr3590-111'
@@ -63,6 +67,12 @@ DEFINITELY_REPEAL_BILL_IDS = frozenset([
 ])
 
 
+if sys.version_info < (3, 0):
+    iteritems = dict.iteritems
+else:
+    iteritems = dict.items
+
+
 def is_repeal(hr_summary_dict):
     if hr_summary_dict['bill_id'] in NOT_REPEAL_BILL_IDS:
         return False
@@ -85,7 +95,7 @@ def get_vote_dict(roll_number, vote_source_directory):
         vote = json.load(f)
     by_party = collections.defaultdict(collections.Counter)
     by_result = collections.Counter()
-    for vote_type, votes in vote['votes'].iteritems():
+    for vote_type, votes in iteritems(vote['votes']):
         for vote_item in votes:
             by_party[vote_type][vote_item['party']] += 1
             by_result[vote_type] += 1
@@ -182,16 +192,21 @@ def main():
             # ignore people who withdrew their sponsorship
             if sponsor.get('withdrawn_at') is not None:
                 continue
-            context['sponsors'][sponsor['thomas_id']].append(repeal['bill_id'])
+            if 'thomas_id' in sponsor:
+                context['sponsors'][sponsor['thomas_id']].append(repeal['bill_id'])
 
     # XXX: sort by number of bills sponsored here instead of the teamplate because I can't figure out how to do it in
     # Jinja
-    context['sponsors'] = sorted(context['sponsors'].items(), key=lambda (k, v): len(v), reverse=True)
+    context['sponsors'] = list(sorted(
+        iteritems(context['sponsors']),
+        key=lambda kv: len(kv[1]),
+        reverse=True
+    ))
 
     context['count'] = len(context['repeals'])
     context['cost'] = context['count'] * 435 * 174000 / 225
 
-    print template.render(context).encode('utf-8')
+    print(template.render(context).encode('utf-8'))
 
 
 if __name__ == '__main__':
