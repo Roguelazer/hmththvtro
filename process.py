@@ -58,6 +58,9 @@ NOT_REPEAL_BILL_IDS = frozenset([
     'hr3633-112',
     'hr5433-111',  # this one seems extra scummy
     'hr5110-113',
+    'hr2984-115',  # anti-repeal
+    'hr2985-115',  # anti-repeal
+    'hr2986-115',  # anti-repeal
 ])
 
 DEFINITELY_REPEAL_BILL_IDS = frozenset([
