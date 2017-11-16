@@ -160,7 +160,7 @@ ul.resolution-list li:first-child {
                             {% endif %}
                             {% if repeal.vote %}
                             <td><table class="vote-table">
-                                {% for result, parties in repeal.vote.by_party.items() %}
+                                {% for result, parties in repeal.vote.by_party | dictsort %}
                                 <tr>
                                     <td>{{result}}</td>
                                     <td>{{repeal.vote.by_result[result]}}</td>
@@ -168,7 +168,9 @@ ul.resolution-list li:first-child {
                                     {% set last_x = "0" %}
                                     {% for party in ALL_PARTIES %}
                                     {% set full_party=PARTY_MAP[party] %}
-                                    <rect x="{{last_x}}" height="15" width="{{parties.get(party, 0)}}" class="{{full_party}}_bar"></rect>
+                                    <rect x="{{last_x}}" height="15" width="{{parties.get(party, 0)}}" class="{{full_party}}_bar">
+                                        <title>{{repeal.vote.summaries[result]}}</title>
+                                    </rect>
                                     {% endfor %}
                                     </svg></td>
                                 </tr>

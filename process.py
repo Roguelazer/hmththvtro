@@ -61,12 +61,14 @@ NOT_REPEAL_BILL_IDS = frozenset([
     'hr2984-115',  # anti-repeal
     'hr2985-115',  # anti-repeal
     'hr2986-115',  # anti-repeal
+    'hr4082-115',
 ])
 
 DEFINITELY_REPEAL_BILL_IDS = frozenset([
     'hr683-114',
     'hr5570-111',
     'hr2087-113',
+    'hr1-115',
 ])
 
 
@@ -92,20 +94,28 @@ def is_repeal(hr_summary_dict):
     return False
 
 
-def get_vote_dict(roll_number, vote_source_directory):
+def get_vote_dict(roll_number, vote_source_directory, house_resolution):
     path = os.path.join(vote_source_directory, 'h%s' % roll_number, 'data.json')
     with open(path, 'r') as f:
         vote = json.load(f)
     by_party = collections.defaultdict(collections.Counter)
     by_result = collections.Counter()
     for vote_type, votes in iteritems(vote['votes']):
+        if vote_type == 'Yea':
+            vote_type = 'Aye'
+        if vote_type == 'No':
+            vote_type = 'Nay'
         for vote_item in votes:
             by_party[vote_type][vote_item['party']] += 1
             by_result[vote_type] += 1
+    summaries = {}
+    for vote_type, vote_type_by_party in by_party.items():
+        summaries[vote_type] = ' | '.join('{0} {1}'.format(k, v) for k, v in sorted(vote_type_by_party.items()))
     return {
         'result': vote['result'],
         'by_party': dict((k, dict(v)) for (k, v) in by_party.items()),
         'by_result': dict(by_result),
+        'summaries': summaries
     }
 
 
@@ -121,7 +131,9 @@ def parse_hrs(congress_num, source_directory, vote_source_directory):
                 for action in sorted(data['actions'], key=operator.itemgetter('acted_at')):
                     if action['type'] != 'vote':
                         continue
-                    vote = get_vote_dict(action['roll'], vote_source_directory)
+                    if 'vetoed' in action['status'].lower():
+                        continue
+                    vote = get_vote_dict(action['roll'], vote_source_directory, house_resolution)
                 yield {
                     'congress': congress_num,
                     'bill_id': data['bill_id'],
