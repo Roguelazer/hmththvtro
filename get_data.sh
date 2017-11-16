@@ -2,10 +2,10 @@
 
 set -e
 
-CONGRESSROOT="govtrack.us::govtrackdata/congress/"
+CONGRESSROOT="govtrack.us::govtrack_bootstrap_data/congress/"
 FIRST_CONGRESS=111
-LEGISLATORS_CURRENT_YAML="govtrack.us::govtrackdata/congress-legislators/legislators-current.yaml"
-LEGISLATORS_HISTORICAL_YAML="govtrack.us::govtrackdata/congress-legislators/legislators-historical.yaml"
+LEGISLATORS_CURRENT_YAML="govtrack.us::govtrack_bootstrap_data/congress-legislators/legislators-current.yaml"
+LEGISLATORS_HISTORICAL_YAML="govtrack.us::govtrack_bootstrap_data/congress-legislators/legislators-historical.yaml"
 
 RSYNC_ARGS="-a"
 
